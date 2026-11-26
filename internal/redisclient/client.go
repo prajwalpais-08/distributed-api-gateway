@@ -1,6 +1,7 @@
 package redisclient
 
 import (
+	"log"
 	"os"
 
 	"github.com/redis/go-redis/v9"
@@ -8,16 +9,25 @@ import (
 
 // NewClient creates a Redis client.
 func NewClient() *redis.Client {
+	redisURL := os.Getenv("REDIS_URL")
+
+	if redisURL != "" {
+		options, err := redis.ParseURL(redisURL)
+		if err != nil {
+			log.Fatalf("Invalid REDIS_URL: %v", err)
+		}
+
+		return redis.NewClient(options)
+	}
+
 	address := os.Getenv("REDIS_ADDR")
 
 	if address == "" {
 		address = "localhost:6379"
 	}
 
-	client := redis.NewClient(&redis.Options{
+	return redis.NewClient(&redis.Options{
 		Addr: address,
 		DB:   0,
 	})
-
-	return client
 }
