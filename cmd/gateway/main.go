@@ -64,7 +64,12 @@ func main() {
 	log.Println("Prometheus metrics initialized")
 
 	// 5. Configure Users backend.
-	usersTarget, err := url.Parse("http://localhost:9001")
+	// usersTarget, err := url.Parse("http://localhost:9001")
+	usersURL := os.Getenv("USERS_SERVICE_URL")
+	if usersURL == "" {
+		usersURL = "http://localhost:9001"
+	}
+	usersTarget, err := url.Parse(usersURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,7 +77,12 @@ func main() {
 	usersProxy := httputil.NewSingleHostReverseProxy(usersTarget)
 
 	// 6. Configure Products backend 1.
-	productsTarget1, err := url.Parse("http://localhost:9002")
+	// productsTarget1, err := url.Parse("http://localhost:9002")
+	productsURL1 := os.Getenv("PRODUCTS_SERVICE_URL_1")
+	if productsURL1 == "" {
+		productsURL1 = "http://localhost:9002"
+	}
+	productsTarget1, err := url.Parse(productsURL1)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -80,7 +90,12 @@ func main() {
 	productsProxy1 := httputil.NewSingleHostReverseProxy(productsTarget1)
 
 	// 7. Configure Products backend 2.
-	productsTarget2, err := url.Parse("http://localhost:9003")
+	// productsTarget2, err := url.Parse("http://localhost:9003")
+	productsURL2 := os.Getenv("PRODUCTS_SERVICE_URL_2")
+	if productsURL2 == "" {
+		productsURL2 = "http://localhost:9003"
+	}
+	productsTarget2, err := url.Parse(productsURL2)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,13 +129,15 @@ func main() {
 	productsLB, err := loadbalancer.NewWithHandlers(
 
 		loadbalancer.BackendConfig{
-			Handler:   protectedBackend1,
-			HealthURL: "http://localhost:9002/health",
+			Handler: protectedBackend1,
+			// HealthURL: "http://localhost:9002/health",
+			HealthURL: productsURL1 + "/health",
 		},
 
 		loadbalancer.BackendConfig{
-			Handler:   protectedBackend2,
-			HealthURL: "http://localhost:9003/health",
+			Handler: protectedBackend2,
+			// HealthURL: "http://localhost:9003/health",
+			HealthURL: productsURL2 + "/health",
 		},
 	)
 
@@ -172,15 +189,21 @@ func main() {
 		w.Write([]byte("API Gateway is healthy"))
 	})
 
+	// 14. Configure gateway address.
+	// address := os.Getenv("GATEWAY_ADDR")
+
+	// if address == "" {
+	// 	address = ":8080"
+	// }
 	address := os.Getenv("GATEWAY_ADDR")
 
-if address == "" {
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080"
-    }
-    address = ":" + port
-}
+	if address == "" {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		address = ":" + port
+	}
 
 	log.Printf("API Gateway running on %s", address)
 
