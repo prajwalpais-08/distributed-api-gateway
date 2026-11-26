@@ -172,12 +172,15 @@ func main() {
 		w.Write([]byte("API Gateway is healthy"))
 	})
 
-	// 14. Configure gateway address.
 	address := os.Getenv("GATEWAY_ADDR")
 
-	if address == "" {
-		address = ":8080"
-	}
+if address == "" {
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    address = ":" + port
+}
 
 	log.Printf("API Gateway running on %s", address)
 
